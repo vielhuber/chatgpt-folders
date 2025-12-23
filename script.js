@@ -1,0 +1,435 @@
+class Extension {
+    constructor() {
+        this.projects = [];
+        this.access_token = null;
+        this.$div = null;
+        this.observer_active = true;
+    }
+
+    async init() {
+        // get access token
+        this.getAccessToken();
+
+        // check activation
+        if (!this.extensionShouldBeActive()) {
+            return;
+        }
+
+        // set active class
+        document.body.classList.add('custom-chatgpt');
+
+        // inject images
+        document.documentElement.style.setProperty(
+            '--extension-bg-image',
+            `url("${(typeof browser !== 'undefined' && browser.runtime ? browser.runtime : chrome.runtime).getURL(
+                'bg.gif'
+            )}")`
+        );
+
+        // read from cache
+        this.loadProjectsFromCache();
+        if (this.projects.length > 0) {
+            await this.injectProjects();
+            this.updateActiveStates();
+            this.restoreScrollPosition();
+            this.insertTitleToTop();
+        }
+
+        // setup observers
+        this.setupUrlObserver();
+        this.setupTitleObserver();
+        this.setupScrollObserver();
+
+        // make the main run
+        this.observer_active = false;
+        await this.fetchProjects();
+        this.storeProjectsInCache();
+        await this.injectProjects();
+        this.updateActiveStates();
+        this.restoreScrollPosition();
+        this.insertTitleToTop();
+        this.observer_active = true;
+    }
+
+    getAccessToken() {
+        let match = document.documentElement.outerHTML.match(/"accessToken":"(.*?)"/);
+        if (match && match[1]) {
+            this.access_token = match[1];
+        }
+    }
+
+    extensionShouldBeActive() {
+        return !(window.location.host.indexOf('chatgpt.com') === -1 || this.access_token === null);
+    }
+
+    async setupUrlObserver() {
+        let last_url = window.location.href;
+        setInterval(async () => {
+            if (last_url !== window.location.href) {
+                this.insertTitleToTop();
+                last_url = window.location.href;
+                if (this.observer_active === true) {
+                    this.observer_active = false;
+                    //console.log('RUN URL OBSERVER');
+                    await this.waitForMainElement();
+                    await this.sleep(1000); // small delay to ensure data is ready server side
+                    await this.fetchProjects();
+                    this.storeProjectsInCache();
+                    await this.injectProjects();
+                    this.updateActiveStates();
+                    this.restoreScrollPosition();
+                    this.observer_active = true;
+                }
+            }
+        }, 500);
+    }
+
+    async setupTitleObserver() {
+        let last_title = document.title;
+        setInterval(async () => {
+            if (last_title !== document.title) {
+                this.insertTitleToTop();
+                last_title = document.title;
+                if (this.observer_active === true) {
+                    this.observer_active = false;
+                    //console.log('RUN TITLE OBSERVER');
+                    // update name in projects first
+                    this.updateNameOfActiveProject();
+                    await this.sleep(15000); // small delay to ensure data is ready server side
+                    await this.fetchProjects();
+                    this.storeProjectsInCache();
+                    await this.injectProjects();
+                    this.updateActiveStates();
+                    this.restoreScrollPosition();
+                    this.observer_active = true;
+                }
+            }
+        }, 500);
+    }
+
+    loadProjectsFromCache() {
+        if (localStorage.getItem('projects') !== null) {
+            this.projects = JSON.parse(localStorage.getItem('projects'));
+        }
+    }
+
+    storeProjectsInCache() {
+        localStorage.setItem('projects', JSON.stringify(this.projects));
+    }
+
+    async fetchProjects() {
+        //console.log('fetchProjects(): START');
+        this.projects = [];
+        let cursor = null;
+        while (true) {
+            let url = 'https://chatgpt.com/backend-api/gizmos/snorlax/sidebar?conversations_per_gizmo=10';
+            if (cursor !== null) {
+                url += '&cursor=' + cursor;
+            }
+            url += '&t=' + Date.now();
+            let response = await new Promise((resolve, reject) => {
+                //console.log(url);
+                chrome.runtime.sendMessage(
+                    {
+                        action: 'fetch',
+                        data: {
+                            url: url,
+                            args: {
+                                method: 'GET',
+                                cache: 'no-store',
+                                headers: {
+                                    Authorization: 'Bearer ' + this.access_token,
+                                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                                    Pragma: 'no-cache',
+                                    Expires: '0'
+                                }
+                            }
+                        }
+                    },
+                    response => {
+                        resolve(response);
+                    }
+                );
+            });
+            if (response.items.length > 0) {
+                for (let items__value of response.items) {
+                    //console.log(items__value);
+                    let id = items__value.gizmo.gizmo.short_url,
+                        name = items__value.gizmo.gizmo.display.name,
+                        url = 'https://chatgpt.com/g/' + items__value.gizmo.gizmo.short_url + '/project',
+                        level = 0;
+                    if (id.split('-').length > 3) {
+                        id = id.split('-').slice(0, 3).join('-');
+                    }
+                    if (name.split(' - ').length > 1) {
+                        level = name.split(' - ').length - 1;
+                    }
+                    this.projects.push({
+                        id: id,
+                        name: name,
+                        url: url,
+                        level: level,
+                        count: items__value.conversations.items.length,
+                        icon: '📁',
+                        type: 'project',
+                        done: name.toLowerCase().includes('erledigt')
+                    });
+                }
+            }
+            if (response.cursor !== null) {
+                cursor = response.cursor;
+            } else {
+                break;
+            }
+        }
+        // sort projects by name
+        this.projects.sort((a, b) => {
+            let name_a = a.name,
+                name_b = b.name,
+                done_a = a.done,
+                done_b = b.done,
+                unsorted_a = a.name.toLowerCase().includes('ungeordnet'),
+                unsorted_b = b.name.toLowerCase().includes('ungeordnet');
+            if (done_a && !done_b) {
+                return 1;
+            }
+            if (!done_a && done_b) {
+                return -1;
+            }
+            if (unsorted_a && !unsorted_b) {
+                return 1;
+            }
+            if (!unsorted_a && unsorted_b) {
+                return -1;
+            }
+            return name_a.localeCompare(name_b, undefined, {
+                numeric: true,
+                sensitivity: 'base'
+            });
+        });
+        // insert headings
+        let projects_with_headings = [],
+            projects_with_headings_orig = this.projects,
+            last_heading = null,
+            this_heading = null,
+            max_levels = 0;
+        for (let projects__value of projects_with_headings_orig) {
+            if (projects__value.name.split(' - ').length - 1 > max_levels) {
+                max_levels = projects__value.name.split(' - ').length - 1;
+            }
+        }
+        //console.log('max_levels: ' + max_levels);
+        for (let i = 0; i <= max_levels; i++) {
+            projects_with_headings = [];
+            last_heading = null;
+            this_heading = null;
+            for (let projects__value of projects_with_headings_orig) {
+                if (projects__value.name.split(' - ').length > 1) {
+                    this_heading = projects__value.name.split(' - ')[0];
+                    if (last_heading !== this_heading) {
+                        last_heading = this_heading;
+                        projects_with_headings.push({
+                            id: null,
+                            name: this_heading,
+                            url: '#',
+                            level: i,
+                            count: 0,
+                            icon: '📦',
+                            type: 'heading',
+                            done: projects__value.done
+                        });
+                    }
+                    if (projects__value.name.split(' - ').length > 1) {
+                        projects__value.name = projects__value.name.split(' - ').slice(1).join(' - ');
+                    }
+                }
+                projects_with_headings.push(projects__value);
+            }
+            projects_with_headings_orig = projects_with_headings;
+            //console.log(projects_with_headings);
+            //console.log(this.projects);
+        }
+        //console.log(this.projects);
+        this.projects = projects_with_headings;
+
+        // modify done
+        for (let projects__value of this.projects) {
+            if (projects__value.done) {
+                if (projects__value.type === 'heading') {
+                    projects__value.icon = '✅';
+                }
+            }
+        }
+
+        //console.log(this.projects);
+        //console.log('fetchProjects(): END');
+    }
+
+    async waitForMainElement() {
+        while (true) {
+            if (document.querySelector('.group.__menu-item[href*="project"]') !== null) {
+                break;
+            }
+            await this.sleep(100);
+        }
+        this.$div = document.querySelector('.group.__menu-item[href*="project"]').closest('div');
+    }
+
+    async sleep(ms) {
+        await new Promise(resolve => setTimeout(() => resolve(), ms));
+    }
+
+    async injectProjects() {
+        // wait for main element
+        await this.waitForMainElement();
+        //console.log('injectProjects(): START');
+        //console.log(this.$div);
+        if (this.$div.querySelector('.group.__menu-item:not(:first-child)') !== null) {
+            this.$div.querySelectorAll('.group.__menu-item:not(:first-child)').forEach($el => {
+                // hide first (also important for subsequent runs)
+                $el.classList.remove('visible');
+                // show opened
+                if ($el.nextElementSibling !== null && $el.nextElementSibling.classList.contains('overflow-hidden')) {
+                    //$el.style.opacity = 0.5;
+                    //$el.style.display = 'none';
+                    $el.classList.add('visible');
+                }
+            });
+        }
+        if (document.querySelector('.projects-container') !== null) {
+            document.querySelector('.projects-container').remove();
+        }
+        let $child = new DOMParser().parseFromString(
+            `
+                <div class="projects-container">
+                    <ul class="projects-container__list">
+                    </ul>
+                </div>
+            `,
+            'text/html'
+        ).body.childNodes[0];
+        this.$div.parentNode.insertBefore($child, this.$div);
+        //console.log(this.projects);
+        for (let projects__value of this.projects) {
+            $child.querySelector('.projects-container__list').insertAdjacentHTML(
+                'beforeend',
+                `
+                    <li
+                        class="
+                            projects-container__list-item
+                            projects-container__list-item--${projects__value.type}
+                            projects-container__list-item--level-${projects__value.level}
+                            ${projects__value.done === true ? 'projects-container__list-item--done' : ''}
+                        "
+                        ${projects__value.id !== null ? 'data-id="' + projects__value.id + '"' : ''}
+                    >
+                        <a
+                            class="projects-container__list-link"
+                            href="${projects__value.url}"
+                            title="${projects__value.name}"
+                        >
+                            <span class="projects-container__list-link-icon">${projects__value.icon}</span>
+                            <span class="projects-container__list-link-name">${projects__value.name}</span>
+                            ${projects__value.type === 'project' ? '<span class="projects-container__list-link-count">(' + projects__value.count + ')</span>' : ''}
+                        </a>
+                    </li>
+                `
+            );
+        }
+        //console.log('injectProjects(): END');
+    }
+
+    updateActiveStates() {
+        //console.log('updateActiveStates(): START');
+        if (document.querySelector('.projects-container__list-item') !== null) {
+            document.querySelectorAll('.projects-container__list-item').forEach($el => {
+                if (window.location.href.includes($el.getAttribute('data-id'))) {
+                    $el.classList.add('projects-container__list-item--active');
+                } else {
+                    $el.classList.remove('projects-container__list-item--active');
+                }
+            });
+        }
+        //console.log('updateActiveStates(): END');
+    }
+
+    updateNameOfActiveProject() {
+        if (document.querySelector('a[href="#edit-title"]') !== null) {
+            if (document.querySelector('.projects-container__list-item') !== null) {
+                document.querySelectorAll('.projects-container__list-item').forEach($el => {
+                    if (window.location.href.includes($el.getAttribute('data-id'))) {
+                        let name = document.querySelector('a[href="#edit-title"]').innerText;
+                        if (name.split(' - ').length > 1) {
+                            name = name.split(' - ').slice(1).join(' - ');
+                        }
+                        $el.querySelector('.projects-container__list-link-name').innerText = name;
+                    }
+                });
+            }
+        }
+    }
+
+    setupScrollObserver() {
+        let $el = document.querySelector('.group\\/scrollport');
+        if ($el !== null) {
+            $el.addEventListener('scroll', () => {
+                localStorage.setItem('scrollPos', $el.scrollTop);
+            });
+        }
+    }
+
+    restoreScrollPosition() {
+        let $el = document.querySelector('.group\\/scrollport');
+        if ($el !== null) {
+            let scrollPos = localStorage.getItem('scrollPos');
+            if (scrollPos !== null) {
+                $el.scrollTop = parseInt(scrollPos, 10);
+            }
+        }
+    }
+
+    insertTitleToTop() {
+        let $el = document.querySelector('#page-header > .flex.items-center:last-child');
+        if ($el !== null && window.location.href.includes('/c/')) {
+            let title = document.title;
+            title = title.replace(/^ChatGPT | /, '');
+            title = title.replace(/^ChatGPT - /, '');
+            title = title.replace(/^ChatGPT/, '');
+            if (title === '') {
+                return;
+            }
+
+            if (title.includes(' - ')) {
+                let project_url = window.location.href;
+                if (project_url.includes('/g/')) {
+                    project_url = project_url.replace(/^(.+\/g\/(.+?)\/).+/, '$1');
+                }
+                title = title.replace(
+                    /(.+) - (.+)/,
+                    '<a href="' + project_url + '" class="text-token-text-tertiary">$1</a><span>-</span><span>$2</span>'
+                );
+            } else {
+                title = '<span>' + title + '</span>';
+            }
+            title = '<span>💬</span>' + title + '<span>💬</span>';
+            if (document.querySelector('.header-title') !== null) {
+                document.querySelector('.header-title').innerHTML = title;
+            } else {
+                $el.before(
+                    new DOMParser().parseFromString(
+                        '<div class="flex items-center font-bold header-title">' + title + '</div>',
+                        'text/html'
+                    ).body.childNodes[0]
+                );
+                if ($el.parentNode.querySelector('.start-1\\/2') !== null) {
+                    $el.parentNode.querySelector('.start-1\\/2').remove();
+                }
+            }
+        }
+    }
+}
+
+(async () => {
+    let e = new Extension();
+    e.init();
+})();
