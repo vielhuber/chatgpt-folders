@@ -172,7 +172,7 @@ class Extension {
                         count: items__value.conversations.items.length,
                         icon: '📁',
                         type: 'project',
-                        done: name.toLowerCase().includes('erledigt')
+                        done: name.toLowerCase().includes('done') || name.toLowerCase().includes('erledigt')
                     });
                 }
             }

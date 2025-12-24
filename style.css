@@ -149,7 +149,7 @@
         .group\/scrollport::-webkit-scrollbar,
         .group\/scrollport:hover::-webkit-scrollbar,
         #thread .overflow-y-auto::-webkit-scrollbar {
-            width: calc(var(--spacing) * 4);
+            width: calc(var(--spacing) * 2);
         }
         .group\/scrollport::-webkit-scrollbar-track,
         #thread .overflow-y-auto::-webkit-scrollbar-track {
