@@ -9,7 +9,7 @@
         bottom: 0;
         right: 0;
         opacity: 0.05;
-        content: "";
+        content: '';
         z-index: -1;
         background-image: var(--extension-bg-image);
         background-color: #fff;
@@ -106,9 +106,9 @@
         font-size: var(--text-xs);
         color: var(--gray-400);
     }
-    .group.__menu-item[href*="project"].group.__menu-item:not(:first-child):not(.visible),
-    .group.__menu-item[href*="project"].group.__menu-item:not(:first-child):not(.visible) + div,
-    .group.__menu-item[href*="project"].group.__menu-item:not(:first-child).visible
+    .group.__menu-item[href*='project'].group.__menu-item:not(:first-child):not(.visible),
+    .group.__menu-item[href*='project'].group.__menu-item:not(:first-child):not(.visible) + div,
+    .group.__menu-item[href*='project'].group.__menu-item:not(:first-child).visible
         + div
         .group.__menu-item:not([data-active]) {
         /*opacity: 0.5;*/
@@ -167,7 +167,7 @@
             scrollbar-color: var(--red-500) var(--gray-800);
         }
     }
-    [data-testid="share-chat-button"] {
+    [data-testid='share-chat-button'] {
         display: none;
     }
     #thread-bottom-container .text-xs .pointer-events-auto {

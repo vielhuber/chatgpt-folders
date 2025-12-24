@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
-    "name": "ChatGPT Project Folders",
-    "description": "Shows ChatGPT Project Folders in the sidebar.",
+    "name": "ChatGPT folders",
+    "description": "Organize your projects in sortable folders inside chatgpt.com.",
     "version": "42",
     "permissions": ["storage"],
     "host_permissions": ["<all_urls>"],
