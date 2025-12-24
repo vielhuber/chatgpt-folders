@@ -13,7 +13,7 @@ A browser extension that organizes your ChatGPT projects in a sortable, hierarch
 
 ## Installation
 
-### Chrome/Edge
+### Chrome
 
 ...
 
