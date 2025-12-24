@@ -1,4 +1,4 @@
-# ChatGPT Folders 📁
+# 📁 ChatGPT folders 📁
 
 A browser extension that organizes your ChatGPT projects in a sortable, hierarchical folder structure.
 
