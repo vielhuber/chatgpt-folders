@@ -1,5 +1,6 @@
 {
     "manifest_version": 3,
+    "id": "chatgpt-folders",
     "name": "ChatGPT folders",
     "description": "Organize your projects in sortable folders inside chatgpt.com.",
     "version": "42",
