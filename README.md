@@ -6,10 +6,11 @@ A browser extension that organizes your ChatGPT projects in a sortable, hierarch
 
 - 📂 **Hierarchical folders** - Organize GPT projects in multiple levels using `-` separator
 - 🔢 **Conversation counter** - See how many conversations each project contains
-- ✅ **Completed projects** - Mark projects as done by including "erledigt" in the name
+- ✅ **Completed projects** - Mark projects as done by including "done" in the name
 - 💾 **Smart caching** - Fast loading with localStorage
 - 🔄 **Auto-sync** - Real-time updates on URL and title changes
 - 📍 **Scroll persistence** - Remembers your scroll position
+- 🎨 **Background theme** – The extension offers a background theme for ChatGPT.
 
 ## Installation
 

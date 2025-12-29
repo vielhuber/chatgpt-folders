@@ -11,12 +11,11 @@
             }
         }
     },
-    "permissions": ["storage"],
-    "host_permissions": ["<all_urls>"],
+    "host_permissions": ["https://chatgpt.com/*", "https://*.chatgpt.com/*"],
     "web_accessible_resources": [
         {
             "resources": ["*"],
-            "matches": ["<all_urls>"]
+            "matches": ["https://chatgpt.com/*", "https://*.chatgpt.com/*"]
         }
     ],
     "background": {
@@ -28,7 +27,7 @@
     },
     "content_scripts": [
         {
-            "matches": ["<all_urls>"],
+            "matches": ["https://chatgpt.com/*", "https://*.chatgpt.com/*"],
             "js": ["script.js"],
             "css": ["style.css"]
         }
