@@ -10,7 +10,7 @@ A browser extension that organizes your ChatGPT projects in a sortable, hierarch
 - 💾 **Smart caching** - Fast loading with localStorage
 - 🔄 **Auto-sync** - Real-time updates on URL and title changes
 - 📍 **Scroll persistence** - Remembers your scroll position
-- 🎨 **Background theme** - The extension offers a background theme for ChatGPT.
+- 🎨 **Background theme** - The extension offers a background theme for ChatGPT
 
 ## Installation
 
@@ -20,7 +20,7 @@ A browser extension that organizes your ChatGPT projects in a sortable, hierarch
 
 ### Firefox
 
-- [https://addons.mozilla.org/de/firefox/addon/chatgptfolders/](https://addons.mozilla.org/de/firefox/addon/chatgptfolders/)
+- [https://addons.mozilla.org/de/firefox/addon/chatgptfolders](https://addons.mozilla.org/de/firefox/addon/chatgptfolders/)
 
 ## Usage
 
