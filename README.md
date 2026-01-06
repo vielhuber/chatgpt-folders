@@ -20,11 +20,11 @@ A browser extension that organizes your ChatGPT projects in a sortable, hierarch
 
 ### Firefox
 
-- [https://addons.mozilla.org/de/firefox/addon/chatgptfolders](https://addons.mozilla.org/de/firefox/addon/chatgptfolders)
+- [https://addons.mozilla.org/de/firefox/addon/chatgptfolders/](https://addons.mozilla.org/de/firefox/addon/chatgptfolders/)
 
 ## Usage
 
-### Creating Hierarchies
+### Creating hierarchies
 
 Use `-` (space-dash-space) in your GPT project names:
 
@@ -45,6 +45,6 @@ Results in:
     📁 Details (2)
 ```
 
-### Marking as Done
+### Marking as done
 
 Include "done" anywhere in the project name. Completed projects are sorted to the end and marked with ✅.
