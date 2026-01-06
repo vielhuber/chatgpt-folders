@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "ChatGPT folders",
     "description": "Organize your projects in sortable folders inside chatgpt.com.",
-    "version": "42.0.1",
+    "version": "42.0.2",
     "browser_specific_settings": {
         "gecko": {
             "id": "chatgpt-folders@vielhuber.de",
