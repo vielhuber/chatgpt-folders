@@ -20,7 +20,7 @@ A browser extension that organizes your ChatGPT projects in a sortable, hierarch
 
 ### Firefox
 
-- [https://addons.mozilla.org/de/firefox/addon/chatgptfolders/?utm_source=addons.mozilla.org&utm_medium=referral&utm_content=search](https://addons.mozilla.org/de/firefox/addon/chatgptfolders/?utm_source=addons.mozilla.org&utm_medium=referral&utm_content=search)
+- [https://addons.mozilla.org/de/firefox/addon/chatgptfolders](https://addons.mozilla.org/de/firefox/addon/chatgptfolders)
 
 ## Usage
 
