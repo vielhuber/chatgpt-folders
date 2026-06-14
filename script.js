@@ -6,6 +6,17 @@ class Extension {
         this.observer_active = true;
     }
 
+    // escape API-derived values before they are interpolated into HTML strings
+    // (insertAdjacentHTML / innerHTML), preventing DOM XSS via project/conversation names
+    escapeHtml(value) {
+        return String(value === null || value === undefined ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     async init() {
         // get access token
         this.getAccessToken();
@@ -317,20 +328,20 @@ class Extension {
                     <li
                         class="
                             projects-container__list-item
-                            projects-container__list-item--${projects__value.type}
-                            projects-container__list-item--level-${projects__value.level}
+                            projects-container__list-item--${this.escapeHtml(projects__value.type)}
+                            projects-container__list-item--level-${this.escapeHtml(projects__value.level)}
                             ${projects__value.done === true ? 'projects-container__list-item--done' : ''}
                         "
-                        ${projects__value.id !== null ? 'data-id="' + projects__value.id + '"' : ''}
+                        ${projects__value.id !== null ? 'data-id="' + this.escapeHtml(projects__value.id) + '"' : ''}
                     >
                         <a
                             class="projects-container__list-link"
-                            href="${projects__value.url}"
-                            title="${projects__value.name}"
+                            href="${this.escapeHtml(projects__value.url)}"
+                            title="${this.escapeHtml(projects__value.name)}"
                         >
-                            <span class="projects-container__list-link-icon">${projects__value.icon}</span>
-                            <span class="projects-container__list-link-name">${projects__value.name}</span>
-                            ${projects__value.type === 'project' ? '<span class="projects-container__list-link-count">(' + projects__value.count + ')</span>' : ''}
+                            <span class="projects-container__list-link-icon">${this.escapeHtml(projects__value.icon)}</span>
+                            <span class="projects-container__list-link-name">${this.escapeHtml(projects__value.name)}</span>
+                            ${projects__value.type === 'project' ? '<span class="projects-container__list-link-count">(' + this.escapeHtml(projects__value.count) + ')</span>' : ''}
                         </a>
                     </li>
                 `
@@ -398,6 +409,8 @@ class Extension {
             if (title === '') {
                 return;
             }
+            // escape the conversation title before building markup (innerHTML sink below)
+            title = this.escapeHtml(title);
 
             if (title.includes(' - ')) {
                 let project_url = window.location.href;
@@ -406,7 +419,7 @@ class Extension {
                 }
                 title = title.replace(
                     /(.+) - (.+)/,
-                    '<a href="' + project_url + '" class="text-token-text-tertiary">$1</a><span>-</span><span>$2</span>'
+                    '<a href="' + this.escapeHtml(project_url) + '" class="text-token-text-tertiary">$1</a><span>-</span><span>$2</span>'
                 );
             } else {
                 title = '<span>' + title + '</span>';
